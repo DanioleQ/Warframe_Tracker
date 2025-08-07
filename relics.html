@@ -12,10 +12,12 @@
         gap: 5px;
         justify-content: space-around;
       }
-
+      .relikt_nazwa {
+        width: 100px;
+      }
       table {
         border-collapse: collapse;
-        width: 200px;
+        width: 175px;
         border: 1px solid #ccc;
       }
 
@@ -25,7 +27,6 @@
         padding: 8px;
         text-align: left;
       }
-
       th {
         text-align: center;
         font-size: 1.1em;
@@ -34,10 +35,12 @@
       h1 {
         text-align: center;
       }
-
+      .td2 {
+        width: 10px;
+      }
       .check {
-        margin-right: -12px;
-        margin-left: 7px;
+        margin-left: 5px;
+        margin-right: 50%;
       }
 
       #searchInput {
@@ -117,7 +120,8 @@
         const td1 = document.createElement("td");
         const td2 = document.createElement("td");
         const checkbox = document.createElement("input");
-
+        td1.className = "relikt_nazwa";
+        td2.className = "td2";
         checkbox.type = "checkbox";
         checkbox.className = "check";
         checkbox.checked = !!checkedStates[name];
