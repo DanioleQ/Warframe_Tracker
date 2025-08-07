@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Warframe Tracker</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <a href="index.html" style="color: white; text-decoration: none"><-</a>
+    <h1>Warframe Tracker</h1>
+    <div id="progress-container">
+      <div id="progress-text">Postęp: 0%</div>
+      <div id="progress-bar">
+        <div id="progress-fill"></div>
+      </div>
+    </div>
+    <div id="progress">Ładowanie postępu...</div>
+    <div class="frame-list" id="frameList"></div>
+
+    <script>
+      const warframes = [
+        { name: "Ash", prime: true },
+        { name: "Atlas", prime: true },
+        { name: "Banshee", prime: true },
+        { name: "Baruuk", prime: true },
+        { name: "Caliban", prime: true },
+        { name: "Chroma", prime: true },
+        { name: "Citrine", prime: false },
+        { name: "Cyte-09", prime: false },
+        { name: "Dagath", prime: false },
+        { name: "Dante", prime: false },
+        { name: "Ember", prime: true },
+        { name: "Equinox", prime: true },
+        { name: "Excalibur", prime: true },
+        { name: "Frost", prime: true },
+        { name: "Gara", prime: true },
+        { name: "Garuda", prime: true },
+        { name: "Gauss", prime: true },
+        { name: "Grendel", prime: true },
+        { name: "Gyre", prime: false },
+        { name: "Harrow", prime: true },
+        { name: "Hildryn", prime: true },
+        { name: "Hydroid", prime: true },
+        { name: "Inaros", prime: true },
+        { name: "Ivara", prime: true },
+        { name: "Jade", prime: false },
+        { name: "Khora", prime: true },
+        { name: "Koumei", prime: false },
+        { name: "Kullervo", prime: false },
+        { name: "Lavos", prime: true },
+        { name: "Limbo", prime: true },
+        { name: "Loki", prime: true },
+        { name: "Mag", prime: true },
+        { name: "Mesa", prime: true },
+        { name: "Mirage", prime: true },
+        { name: "Nekros", prime: true },
+        { name: "Nezha", prime: true },
+        { name: "Nidus", prime: true },
+        { name: "Nova", prime: true },
+        { name: "Nyx", prime: true },
+        { name: "Oberon", prime: true },
+        { name: "Octavia", prime: true },
+        { name: "Oraxia", prime: false },
+        { name: "Protea", prime: true },
+        { name: "Qorvex", prime: false },
+        { name: "Revenant", prime: true },
+        { name: "Rhino", prime: true },
+        { name: "Saryn", prime: true },
+        { name: "Sevagoth", prime: true },
+        { name: "Styanax", prime: false },
+        { name: "Temple", prime: false },
+        { name: "Titania", prime: true },
+        { name: "Trinity", prime: true },
+        { name: "Uriel", prime: false },
+        { name: "Valkyr", prime: true },
+        { name: "Vauban", prime: true },
+        { name: "Volt", prime: true },
+        { name: "Voruna", prime: false },
+        { name: "Wisp", prime: true },
+        { name: "Wukong", prime: true },
+        { name: "Xaku", prime: true },
+        { name: "Yareli", prime: true },
+        { name: "Zephyr", prime: true },
+      ];
+
+      const listContainer = document.getElementById("frameList");
+      const progressDisplay = document.getElementById("progress");
+
+      function loadStatus(key) {
+        return localStorage.getItem(key) === "true";
+      }
+
+      function saveStatus(key, value) {
+        localStorage.setItem(key, value);
+        updateProgress();
+      }
+
+      function updateProgress() {
+        const totalNormal = warframes.length;
+        const totalPrime = warframes.filter((w) => w.prime).length;
+
+        let gotNormal = 0;
+        let gotPrime = 0;
+
+        warframes.forEach((frame) => {
+          const normalKey = `warframe_${frame.name}_normal`;
+          if (loadStatus(normalKey)) gotNormal++;
+
+          if (frame.prime) {
+            const primeKey = `warframe_${frame.name}_prime`;
+            if (loadStatus(primeKey)) gotPrime++;
+          }
+        });
+
+        const total = totalNormal + totalPrime;
+        const totalGot = gotNormal + gotPrime;
+        const percent = ((totalGot / total) * 100).toFixed(1);
+
+        progressDisplay.innerHTML = `
+      <strong>All:</strong> ${totalGot} / ${total} zdobytych<br>
+       Podstawowe: ${gotNormal} / ${totalNormal} &nbsp;&nbsp;  Prime: ${gotPrime} / ${totalPrime}
+    `;
+        document.getElementById(
+          "progress-text"
+        ).textContent = `${percent}% zdobytych`;
+        document.getElementById("progress-fill").style.width = `${percent}%`;
+      }
+
+      // generuj listę kart
+      warframes.forEach((frame) => {
+        const card = document.createElement("div");
+        card.className = "frame-card";
+
+        const nameRow = document.createElement("div");
+        nameRow.className = "frame-names";
+
+        const normalTitle = document.createElement("span");
+        normalTitle.textContent = frame.name;
+        nameRow.appendChild(normalTitle);
+
+        if (frame.prime) {
+          const primeTitle = document.createElement("span");
+          primeTitle.className = "prime";
+          primeTitle.textContent = " Prime";
+          nameRow.appendChild(primeTitle);
+        }
+
+        card.appendChild(nameRow);
+
+        const checkboxes = document.createElement("div");
+        checkboxes.className = "checkboxes";
+
+        // Checkbox normal
+        const normalCheckbox = document.createElement("input");
+        normalCheckbox.type = "checkbox";
+        normalCheckbox.className = "checkbox";
+        const normalKey = `warframe_${frame.name}_normal`;
+        normalCheckbox.checked = loadStatus(normalKey);
+        normalCheckbox.addEventListener("change", () => {
+          saveStatus(normalKey, normalCheckbox.checked);
+        });
+        checkboxes.appendChild(normalCheckbox);
+
+        // Checkbox prime
+        if (frame.prime) {
+          const primeCheckbox = document.createElement("input");
+          primeCheckbox.type = "checkbox";
+          primeCheckbox.className = "checkbox_prime";
+          const primeKey = `warframe_${frame.name}_prime`;
+          primeCheckbox.checked = loadStatus(primeKey);
+          primeCheckbox.addEventListener("change", () => {
+            saveStatus(primeKey, primeCheckbox.checked);
+          });
+          checkboxes.appendChild(primeCheckbox);
+        }
+
+        card.appendChild(checkboxes);
+        listContainer.appendChild(card);
+      });
+
+      updateProgress();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Warframe Tracker</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      .tables-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: space-around;
+        padding: 20px;
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 250px;
+        min-width: 200px;
+        border: 1px solid #ccc;
+      }
+
+      th,
+      td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        text-align: left;
+      }
+
+      th {
+        text-align: center;
+        font-size: 1.1em;
+      }
+
+      h1 {
+        text-align: center;
+      }
+
+      .check {
+        margin-right: -25px;
+        margin-left: 7px;
+      }
+
+      #searchInput {
+        display: block;
+        margin: 0 auto 20px auto;
+        padding: 8px 10px;
+        width: 300px;
+        font-size: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <a href="index.html" style="color: white; text-decoration: none"><-</a>
+    <h1>Relikty</h1>
+
+    <input type="text" id="searchInput" placeholder="Wyszukaj Relikty" />
+
+    <div class="tables-container">
+      <!-- Lith -->
+      <table>
+        <thead>
+          <tr>
+            <th colspan="2">Lith</th>
+          </tr>
+        </thead>
+        <tbody id="lith-table"></tbody>
+      </table>
+
+      <!-- Meso -->
+      <table>
+        <thead>
+          <tr>
+            <th colspan="2">Meso</th>
+          </tr>
+        </thead>
+        <tbody id="meso-table"></tbody>
+      </table>
+
+      <!-- Neo -->
+      <table>
+        <thead>
+          <tr>
+            <th colspan="2">Neo</th>
+          </tr>
+        </thead>
+        <tbody id="neo-table"></tbody>
+      </table>
+
+      <!-- Axi -->
+      <table>
+        <thead>
+          <tr>
+            <th colspan="2">Axi</th>
+          </tr>
+        </thead>
+        <tbody id="axi-table"></tbody>
+      </table>
+    </div>
+
+    <script>
+      // Wczytaj zaznaczenia z localStorage
+      function loadCheckboxStates() {
+        const data = localStorage.getItem("checkedRelics");
+        return data ? JSON.parse(data) : {};
+      }
+
+      // Zapisz zaznaczenia do localStorage
+      function saveCheckboxStates(states) {
+        localStorage.setItem("checkedRelics", JSON.stringify(states));
+      }
+
+      // Tworzenie wiersza z checkboxem i obsługą zaznaczeń
+      function createRelicRow(name, checkedStates) {
+        const tr = document.createElement("tr");
+        const td1 = document.createElement("td");
+        const td2 = document.createElement("td");
+        const checkbox = document.createElement("input");
+
+        checkbox.type = "checkbox";
+        checkbox.className = "check";
+        checkbox.checked = !!checkedStates[name];
+
+        // Event: zmiana zaznaczenia
+        checkbox.addEventListener("change", () => {
+          const parent = tr.parentNode;
+
+          // Przenoszenie wiersza na górę
+          if (checkbox.checked) {
+            parent.insertBefore(tr, parent.firstChild);
+          } else {
+            parent.appendChild(tr);
+          }
+
+          // Aktualizacja stanu w localStorage
+          checkedStates[name] = checkbox.checked;
+          saveCheckboxStates(checkedStates);
+        });
+
+        td1.textContent = name;
+        td2.appendChild(checkbox);
+        tr.appendChild(td1);
+        tr.appendChild(td2);
+
+        return tr;
+      }
+
+      // Globalna zmienna na relics i checkedStates
+      let allRelics = [];
+      let checkedStates = {};
+
+      // Podział relics na grupy wg prefixu
+      function groupRelicsByType(relics) {
+        return {
+          Lith: relics.filter((r) => r.startsWith("Lith ")),
+          Meso: relics.filter((r) => r.startsWith("Meso ")),
+          Neo: relics.filter((r) => r.startsWith("Neo ")),
+          Axi: relics.filter((r) => r.startsWith("Axi ")),
+        };
+      }
+
+      // Renderowanie tabel dla wszystkich grup z opcją filtrowania wg searchTerm
+      function renderTables(searchTerm = "") {
+        const grouped = groupRelicsByType(allRelics);
+        checkedStates = loadCheckboxStates();
+
+        // Czyszczenie wszystkich tabel
+        for (const id of [
+          "lith-table",
+          "meso-table",
+          "neo-table",
+          "axi-table",
+        ]) {
+          document.getElementById(id).innerHTML = "";
+        }
+
+        // Funkcja filtrująca i sortująca - zaznaczone na górze, wyszukane na górze
+        function filterAndSort(relics) {
+          const lowerSearch = searchTerm.toLowerCase();
+          // Relikty pasujące do wyszukiwania
+          const matched = relics.filter((r) =>
+            r.toLowerCase().includes(lowerSearch)
+          );
+          // Reszta (niepasujące)
+          const notMatched = relics.filter(
+            (r) => !r.toLowerCase().includes(lowerSearch)
+          );
+
+          // Posortuj tak, żeby w matched na górze zaznaczone były wyżej
+          const sortedMatched = matched.sort((a, b) => {
+            if (checkedStates[b] && !checkedStates[a]) return 1;
+            if (checkedStates[a] && !checkedStates[b]) return -1;
+            return 0;
+          });
+
+          // Posortuj tak, żeby w notMatched zaznaczone też były wyżej
+          const sortedNotMatched = notMatched.sort((a, b) => {
+            if (checkedStates[b] && !checkedStates[a]) return 1;
+            if (checkedStates[a] && !checkedStates[b]) return -1;
+            return 0;
+          });
+
+          return [...sortedMatched, ...sortedNotMatched];
+        }
+
+        // Renderuj po kolei tabele
+        for (const [type, relics] of Object.entries(grouped)) {
+          const tbody = document.getElementById(type.toLowerCase() + "-table");
+          const filteredSortedRelics = filterAndSort(relics);
+
+          filteredSortedRelics.forEach((r) => {
+            tbody.appendChild(createRelicRow(r, checkedStates));
+          });
+        }
+      }
+
+      // Obsługa inputa wyszukiwania
+      document.addEventListener("DOMContentLoaded", () => {
+        const input = document.getElementById("searchInput");
+
+        // Załaduj relics z pliku JSON
+        fetch("relics.json")
+          .then((res) => res.json())
+          .then((data) => {
+            allRelics = data;
+            renderTables();
+
+            // Event do filtrowania przy wpisywaniu
+            input.addEventListener("input", () => {
+              renderTables(input.value.trim());
+            });
+          })
+          .catch((e) => {
+            console.error("Błąd podczas wczytywania relics.json:", e);
+          });
+      });
+    </script>
+  </body>
+</html>
